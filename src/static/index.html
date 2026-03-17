@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatMate AI | Warm Edition</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: linear-gradient(135deg, #fff5e6 0%, #ffecd2 100%); 
+            color: #4a3728; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+        }
+        
+        /* Header */
+        header {
+            background-color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(212, 140, 0, 0.1);
+            color: #d48c00;
+            letter-spacing: 1px;
+        }
+
+        /* Chat Area */
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 1rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-msg {
+            align-self: flex-start;
+            background-color: #ffffff;
+            color: #5d4037;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #ffe0b2;
+        }
+
+        /* Input Area */
+        footer {
+            background-color: #ffffff;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+        }
+
+        input {
+            flex: 1;
+            background-color: #fff9f0;
+            border: 1.5px solid #ffcc80;
+            color: #5d4037;
+            padding: 14px 20px;
+            border-radius: 30px;
+            outline: none;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #ff9966;
+        }
+
+        button {
+            background: #ff9966;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 153, 102, 0.3);
+        }
+
+        button:hover {
+            background: #ff7e47;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 153, 102, 0.4);
+        }
+
+        .typing {
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #bcaaa4;
+            margin-left: 10px;
+        }
+
+        /* Custom Scrollbar */
+        #chat-container::-webkit-scrollbar { width: 6px; }
+        #chat-container::-webkit-scrollbar-thumb { background: #ffcc80; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<header>✨ ChatMate AI</header>
+
+<div id="chat-container">
+    <div class="message ai-msg">Welcome back! I'm your AI companion. How can I brighten your day?</div>
+</div>
+
+<footer>
+    <input type="text" id="userInput" placeholder="Ask me something..." onkeypress="handleKey(event)">
+    <button onclick="sendMessage()">Send</button>
+</footer>
+
+<script>
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('userInput');
+
+    function handleKey(e) { if (e.key === 'Enter') sendMessage(); }
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        appendMessage(text, 'user-msg');
+        userInput.value = '';
+
+        const typingId = 'typing-' + Date.now();
+        const typingDiv = document.createElement('div');
+        typingDiv.id = typingId;
+        typingDiv.className = 'typing';
+        typingDiv.innerText = 'ChatMate is writing...';
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        try {
+           const response = await fetch('https://unalcoholised-rosemary-hallowed.ngrok-free.dev/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: text
+            });
+
+            const rawData = await response.text();
+            const data = JSON.parse(rawData);
+            const aiText = data.choices[0].message.content;
+
+            document.getElementById(typingId).remove();
+            appendMessage(aiText, 'ai-msg');
+        } catch (error) {
+            document.getElementById(typingId).innerText = 'The server is sleeping. Try again?';
+        }
+    }
+
+    function appendMessage(text, className) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerText = text;
+        chatContainer.appendChild(msgDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
